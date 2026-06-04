@@ -102,7 +102,7 @@ jobs:
 
       - name: Run doctests
         run: |
-          uv run pytest --doctest-modules --color=yes \
+          uv run pytest --doctest-modules --color=yes src/ \
             --ignore=src/inspect_evals/kernelbench \
             --ignore=src/inspect_evals/novelty_bench \
             --ignore=src/inspect_evals/livebench \
