@@ -102,14 +102,19 @@ jobs:
 
       - name: Run doctests
         run: |
-          uv run pytest --doctest-modules --color=yes src/ \
-            --ignore=src/inspect_evals/kernelbench \
-            --ignore=src/inspect_evals/novelty_bench \
-            --ignore=src/inspect_evals/livebench \
-            --ignore=src/inspect_evals/mle_bench \
-            --ignore=src/inspect_evals/cve_bench \
-            --ignore=src/inspect_evals/bold \
-            --ignore=src/inspect_evals/abstention_bench
+          # Run doctests only on files that actually contain them. Using
+          # --doctest-modules with a broad path (src/) collects every .py file,
+          # including embedded challenge/task scripts that call exit() at module
+          # level. Using it without a path uses pkgutil.walk_packages(), which
+          # imports all installed modules -- breaking for isolated evals whose
+          # heavy deps (torch, kernelbench, etc.) are not installed in the root
+          # environment. Targeting specific files avoids both problems.
+          uv run pytest --doctest-modules --color=yes \
+            src/inspect_evals/scicode/util.py \
+            src/inspect_evals/utils/deps_utils.py \
+            src/inspect_evals/bfcl/utils/function_parsing.py \
+            src/inspect_evals/healthbench/scorer.py \
+            src/inspect_evals/mmlu/mmlu.py
 
       - name: Test with pytest
         run: |
