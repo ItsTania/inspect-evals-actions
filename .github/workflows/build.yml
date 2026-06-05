@@ -270,7 +270,7 @@ jobs:
             BASE_REF="origin/main"
           fi
           MERGE_BASE=$(git merge-base "$BASE_REF" HEAD)
-          echo "sha=$MERGE_BASE" >> $GITHUB_OUTPUT
+          echo "sha=$MERGE_BASE" >> "$GITHUB_OUTPUT"
           echo "Using merge-base: $MERGE_BASE (base ref: $BASE_REF)"
 
       - name: Get changed files
@@ -454,7 +454,7 @@ jobs:
         if: env.HAS_SLOW_TESTS == 'true'
         shell: bash
         run: |
-          uv run pytest -n 2 -rA --color=yes --durations=50 --suppress-no-test-exit-code $TEST_PATHS
+          uv run pytest -n 2 -rA --color=yes --durations=50 --suppress-no-test-exit-code "$TEST_PATHS"
 
       - name: Install tox and tox-uv (for isolated eval slow tests)
         if: env.HAS_ISOLATED_SLOW_TESTS == 'true' && runner.os == 'Linux'
@@ -514,13 +514,13 @@ jobs:
     steps:
       - name: Determine overall status
         id: status
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
           # Check if any required job failed (excluding set-pending-status which we need to succeed)
-          needs_json='${{ toJSON(needs) }}'
-
           # Parse results, skipping set-pending-status and skipped jobs
           failed=false
-          for job in $(echo "$needs_json" | jq -r 'to_entries[] | select(.key != "set-pending-status") | select(.value.result != "skipped") | .key + ":" + .value.result'); do
+          for job in $(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.key != "set-pending-status") | select(.value.result != "skipped") | .key + ":" + .value.result'); do
             result="${job#*:}"
             if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
               failed=true
@@ -529,11 +529,11 @@ jobs:
           done
 
           if [ "$failed" = "true" ]; then
-            echo "state=failure" >> $GITHUB_OUTPUT
-            echo "description=Tests failed" >> $GITHUB_OUTPUT
+            echo "state=failure" >> "$GITHUB_OUTPUT"
+            echo "description=Tests failed" >> "$GITHUB_OUTPUT"
           else
-            echo "state=success" >> $GITHUB_OUTPUT
-            echo "description=Tests succeeded" >> $GITHUB_OUTPUT
+            echo "state=success" >> "$GITHUB_OUTPUT"
+            echo "description=Tests succeeded" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Update commit status
